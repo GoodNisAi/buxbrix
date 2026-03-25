@@ -7,22 +7,34 @@
 </head>
 <body>
 
-  <h1>🎮 BuxBrix</h1>
+<h1>🎮 BuxBrix</h1>
+
+<div id="auth">
+  <input id="username" placeholder="Username">
+  <input id="password" type="password" placeholder="Password">
+  <br>
+  <button onclick="signup()">Sign Up</button>
+  <button onclick="login()">Login</button>
+  <p id="authMsg"></p>
+</div>
+
+<div id="app" class="hidden">
+  <h2>Welcome, <span id="userDisplay"></span></h2>
   <h2>Bux: <span id="bux">0</span></h2>
 
   <div id="menu">
     <button onclick="startGame('clicker')">Clicker Game</button>
     <button onclick="startGame('guess')">Guess Game</button>
+    <button onclick="logout()">Logout</button>
   </div>
 
   <div id="gameArea" class="hidden">
     <h3 id="gameTitle"></h3>
-
     <div id="gameContent"></div>
-
     <button onclick="backToMenu()">⬅ Back</button>
   </div>
+</div>
 
-  <script src="script.js"></script>
+<script src="script.js"></script>
 </body>
 </html>
