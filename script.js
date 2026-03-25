@@ -1,65 +1,69 @@
-let currentUser = localStorage.getItem("currentUser");
+// APPWRITE SETUP
+const client = new Appwrite.Client();
+
+client
+  .setEndpoint("https://nyc.cloud.appwrite.io/v1")
+  .setProject("69c3c65d0005e5bbeaaf");
+
+const account = new Appwrite.Account(client);
+const databases = new Appwrite.Databases(client);
+
+const DB_ID = "buxbrixDB";
+const COLLECTION_ID = "users";
+
+let currentUser = null;
+let bux = 0;
 
 // AUTO LOGIN
-if (currentUser) {
-  showApp();
-}
+loadUser();
 
-// SIGN UP
-function signup() {
-  let username = document.getElementById("username").value;
-  let password = document.getElementById("password").value;
+// SIGNUP
+async function signup() {
+  let user = username.value;
+  let pass = password.value;
+  let email = user + "@buxbrix.com";
 
-  if (!username || !password) {
-    return showMsg("Fill all fields");
+  try {
+    await account.create(Appwrite.ID.unique(), email, pass, user);
+    showMsg("Account created! Now login.");
+  } catch (err) {
+    showMsg(err.message);
   }
-
-  let users = JSON.parse(localStorage.getItem("users")) || {};
-
-  if (users[username]) {
-    return showMsg("User already exists");
-  }
-
-  users[username] = {
-    password: password,
-    bux: 0
-  };
-
-  localStorage.setItem("users", JSON.stringify(users));
-  showMsg("Account created! Now login.");
 }
 
 // LOGIN
-function login() {
-  let username = document.getElementById("username").value;
-  let password = document.getElementById("password").value;
+async function login() {
+  let user = username.value;
+  let pass = password.value;
+  let email = user + "@buxbrix.com";
 
-  let users = JSON.parse(localStorage.getItem("users")) || {};
-
-  if (!users[username] || users[username].password !== password) {
-    return showMsg("Invalid login");
+  try {
+    await account.createEmailSession(email, pass);
+    loadUser();
+  } catch {
+    showMsg("Login failed");
   }
-
-  localStorage.setItem("currentUser", username);
-  currentUser = username;
-
-  showApp();
 }
 
 // LOGOUT
-function logout() {
-  localStorage.removeItem("currentUser");
+async function logout() {
+  await account.deleteSession("current");
   location.reload();
 }
 
-// SHOW APP
-function showApp() {
-  document.getElementById("auth").classList.add("hidden");
-  document.getElementById("app").classList.remove("hidden");
+// LOAD USER
+async function loadUser() {
+  try {
+    let user = await account.get();
+    currentUser = user.$id;
 
-  document.getElementById("userDisplay").innerText = currentUser;
+    document.getElementById("auth").classList.add("hidden");
+    document.getElementById("app").classList.remove("hidden");
 
-  loadBux();
+    document.getElementById("userDisplay").innerText = user.name;
+
+    loadBux();
+  } catch {}
 }
 
 // MESSAGE
@@ -67,49 +71,65 @@ function showMsg(msg) {
   document.getElementById("authMsg").innerText = msg;
 }
 
-// BUX SYSTEM (PER USER)
-function loadBux() {
-  let users = JSON.parse(localStorage.getItem("users"));
-  bux = users[currentUser].bux;
+// LOAD BUX
+async function loadBux() {
+  let res = await databases.listDocuments(DB_ID, COLLECTION_ID);
+
+  let doc = res.documents.find(d => d.userId === currentUser);
+
+  if (!doc) {
+    await databases.createDocument(DB_ID, COLLECTION_ID, Appwrite.ID.unique(), {
+      userId: currentUser,
+      bux: 0
+    });
+    bux = 0;
+  } else {
+    bux = doc.bux;
+  }
+
   updateBux();
 }
 
-function updateBux() {
-  let users = JSON.parse(localStorage.getItem("users"));
-  users[currentUser].bux = bux;
-
-  localStorage.setItem("users", JSON.stringify(users));
+// UPDATE BUX
+async function updateBux() {
   document.getElementById("bux").innerText = bux;
+
+  let res = await databases.listDocuments(DB_ID, COLLECTION_ID);
+  let doc = res.documents.find(d => d.userId === currentUser);
+
+  if (doc) {
+    await databases.updateDocument(DB_ID, COLLECTION_ID, doc.$id, {
+      bux: bux
+    });
+  }
 }
 
 // GAME SYSTEM
-let bux = 0;
-
 function startGame(game) {
-  document.getElementById("menu").classList.add("hidden");
-  document.getElementById("gameArea").classList.remove("hidden");
+  menu.classList.add("hidden");
+  gameArea.classList.remove("hidden");
 
   if (game === "clicker") loadClicker();
   if (game === "guess") loadGuess();
 }
 
 function backToMenu() {
-  document.getElementById("menu").classList.remove("hidden");
-  document.getElementById("gameArea").classList.add("hidden");
-  document.getElementById("gameContent").innerHTML = "";
+  menu.classList.remove("hidden");
+  gameArea.classList.add("hidden");
+  gameContent.innerHTML = "";
 }
 
-// CLICKER
+// CLICKER GAME (mobile ready)
 function loadClicker() {
-  document.getElementById("gameTitle").innerText = "Tap Fast!";
+  gameTitle.innerText = "Tap Game";
 
-  document.getElementById("gameContent").innerHTML = `
-    <button ontouchstart="tapBux()" onclick="tapBux()">+1 Bux</button>
+  gameContent.innerHTML = `
+    <button ontouchstart="tap()" onclick="tap()">+1 Bux</button>
   `;
 }
 
-function tapBux() {
-  bux += 1;
+function tap() {
+  bux++;
   updateBux();
 }
 
@@ -119,9 +139,9 @@ let number;
 function loadGuess() {
   number = Math.floor(Math.random() * 5) + 1;
 
-  document.getElementById("gameTitle").innerText = "Guess 1-5";
+  gameTitle.innerText = "Guess 1-5";
 
-  document.getElementById("gameContent").innerHTML = `
+  gameContent.innerHTML = `
     <input id="guessInput" type="number" min="1" max="5">
     <br><br>
     <button onclick="checkGuess()">Guess</button>
@@ -130,13 +150,13 @@ function loadGuess() {
 }
 
 function checkGuess() {
-  let guess = document.getElementById("guessInput").value;
+  let guess = guessInput.value;
 
   if (guess == number) {
     bux += 20;
-    document.getElementById("guessResult").innerText = "Correct! +20 Bux 🎉";
+    guessResult.innerText = "Correct! +20 Bux 🎉";
   } else {
-    document.getElementById("guessResult").innerText = "Wrong 😢";
+    guessResult.innerText = "Wrong 😢";
   }
 
   updateBux();
