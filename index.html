@@ -3,14 +3,25 @@
 <head>
   <title>BuxBrix</title>
   <link rel="stylesheet" href="style.css">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
 <body>
 
   <h1>🎮 BuxBrix</h1>
   <h2>Bux: <span id="bux">0</span></h2>
 
-  <button onclick="playGame()">Play Game</button>
-  <p id="result"></p>
+  <div id="menu">
+    <button onclick="startGame('clicker')">Clicker Game</button>
+    <button onclick="startGame('guess')">Guess Game</button>
+  </div>
+
+  <div id="gameArea" class="hidden">
+    <h3 id="gameTitle"></h3>
+
+    <div id="gameContent"></div>
+
+    <button onclick="backToMenu()">⬅ Back</button>
+  </div>
 
   <script src="script.js"></script>
 </body>
