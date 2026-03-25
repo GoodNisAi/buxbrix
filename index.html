@@ -2,13 +2,18 @@
 <html>
 <head>
   <title>BuxBrix</title>
-  <link rel="stylesheet" href="style.css">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <link rel="stylesheet" href="style.css">
+
+  <!-- Appwrite -->
+  <script src="https://cdn.jsdelivr.net/npm/appwrite@13.0.0"></script>
 </head>
 <body>
 
 <h1>🎮 BuxBrix</h1>
 
+<!-- AUTH -->
 <div id="auth">
   <input id="username" placeholder="Username">
   <input id="password" type="password" placeholder="Password">
@@ -18,13 +23,14 @@
   <p id="authMsg"></p>
 </div>
 
+<!-- APP -->
 <div id="app" class="hidden">
   <h2>Welcome, <span id="userDisplay"></span></h2>
   <h2>Bux: <span id="bux">0</span></h2>
 
   <div id="menu">
-    <button onclick="startGame('clicker')">Clicker Game</button>
-    <button onclick="startGame('guess')">Guess Game</button>
+    <button onclick="startGame('clicker')">Clicker</button>
+    <button onclick="startGame('guess')">Guess</button>
     <button onclick="logout()">Logout</button>
   </div>
 
