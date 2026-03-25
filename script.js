@@ -1,13 +1,90 @@
-let bux = localStorage.getItem("bux") || 0;
-bux = parseInt(bux);
-updateBux();
+let currentUser = localStorage.getItem("currentUser");
 
-function updateBux() {
-  document.getElementById("bux").innerText = bux;
-  localStorage.setItem("bux", bux);
+// AUTO LOGIN
+if (currentUser) {
+  showApp();
 }
 
-// MENU SYSTEM
+// SIGN UP
+function signup() {
+  let username = document.getElementById("username").value;
+  let password = document.getElementById("password").value;
+
+  if (!username || !password) {
+    return showMsg("Fill all fields");
+  }
+
+  let users = JSON.parse(localStorage.getItem("users")) || {};
+
+  if (users[username]) {
+    return showMsg("User already exists");
+  }
+
+  users[username] = {
+    password: password,
+    bux: 0
+  };
+
+  localStorage.setItem("users", JSON.stringify(users));
+  showMsg("Account created! Now login.");
+}
+
+// LOGIN
+function login() {
+  let username = document.getElementById("username").value;
+  let password = document.getElementById("password").value;
+
+  let users = JSON.parse(localStorage.getItem("users")) || {};
+
+  if (!users[username] || users[username].password !== password) {
+    return showMsg("Invalid login");
+  }
+
+  localStorage.setItem("currentUser", username);
+  currentUser = username;
+
+  showApp();
+}
+
+// LOGOUT
+function logout() {
+  localStorage.removeItem("currentUser");
+  location.reload();
+}
+
+// SHOW APP
+function showApp() {
+  document.getElementById("auth").classList.add("hidden");
+  document.getElementById("app").classList.remove("hidden");
+
+  document.getElementById("userDisplay").innerText = currentUser;
+
+  loadBux();
+}
+
+// MESSAGE
+function showMsg(msg) {
+  document.getElementById("authMsg").innerText = msg;
+}
+
+// BUX SYSTEM (PER USER)
+function loadBux() {
+  let users = JSON.parse(localStorage.getItem("users"));
+  bux = users[currentUser].bux;
+  updateBux();
+}
+
+function updateBux() {
+  let users = JSON.parse(localStorage.getItem("users"));
+  users[currentUser].bux = bux;
+
+  localStorage.setItem("users", JSON.stringify(users));
+  document.getElementById("bux").innerText = bux;
+}
+
+// GAME SYSTEM
+let bux = 0;
+
 function startGame(game) {
   document.getElementById("menu").classList.add("hidden");
   document.getElementById("gameArea").classList.remove("hidden");
@@ -22,12 +99,11 @@ function backToMenu() {
   document.getElementById("gameContent").innerHTML = "";
 }
 
-// GAME 1: CLICKER (Mobile Friendly)
+// CLICKER
 function loadClicker() {
   document.getElementById("gameTitle").innerText = "Tap Fast!";
 
   document.getElementById("gameContent").innerHTML = `
-    <p>Tap the button to earn Bux</p>
     <button ontouchstart="tapBux()" onclick="tapBux()">+1 Bux</button>
   `;
 }
@@ -37,7 +113,7 @@ function tapBux() {
   updateBux();
 }
 
-// GAME 2: GUESS NUMBER
+// GUESS GAME
 let number;
 
 function loadGuess() {
@@ -46,7 +122,6 @@ function loadGuess() {
   document.getElementById("gameTitle").innerText = "Guess 1-5";
 
   document.getElementById("gameContent").innerHTML = `
-    <p>Guess the number (1-5)</p>
     <input id="guessInput" type="number" min="1" max="5">
     <br><br>
     <button onclick="checkGuess()">Guess</button>
